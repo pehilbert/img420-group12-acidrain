@@ -1,2 +1,4 @@
 .vs
 __pycache__
+*.obj
+module_source/*.obj
