@@ -11,5 +11,15 @@ config_version=5
 [application]
 
 config/name="Game Prototype"
+run/main_scene="uid://djxwlheb115rp"
 config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=2000
+window/size/viewport_height=800
+
+[dotnet]
+
+project/assembly_name="Game Prototype"
