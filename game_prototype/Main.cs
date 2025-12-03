@@ -34,8 +34,10 @@ public partial class Main : Node2D
 		if (_player == null || _player.IsDead)
 			return;
 
+		bool rainAffectsPlayer = _raining && _rainManager != null && _rainManager.IsPlayerInRainZone();
+
 		// Player is safe if sheltered (under any collidable object or in shelter area)
-		if (_raining && !_player.IsSheltered)
+		if (rainAffectsPlayer && !_player.IsSheltered)
 		{
 			_damageTimer += (float)delta;
 			if (_damageTimer >= DamageInterval)
