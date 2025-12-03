@@ -1,6 +1,7 @@
-[gd_scene load_steps=23 format=4 uid="uid://djxwlheb115rp"]
+[gd_scene load_steps=24 format=4 uid="uid://djxwlheb115rp"]
 
 [ext_resource type="Texture2D" uid="uid://bsrjxhsrg7bed" path="res://PixelPlatformerSet1v.1.1/main_lev_build.png" id="1_aqk2v"]
+[ext_resource type="Script" uid="uid://cvcfyq6p3ue7i" path="res://Main.cs" id="1_hiqwa"]
 [ext_resource type="Texture2D" uid="uid://cflowhb4caqxh" path="res://PixelPlatformerSet1v.1.1/other_and_decorative.png" id="2_036b0"]
 [ext_resource type="Texture2D" uid="uid://f8oofylvy78t" path="res://PixelPlatformerSet1v.1.1/Background/01 background.png" id="3_dwbse"]
 [ext_resource type="Texture2D" uid="uid://cyaov7vtjsn7n" path="res://PixelPlatformerSet1v.1.1/Background/04 background.png" id="4_pkg7o"]
@@ -5018,8 +5019,12 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_70uel"]
 size = Vector2(11, 27)
 
-[node name="TileMap" type="Node2D"]
-position = Vector2(-1, 560)
+[node name="Main" type="Node2D"]
+script = ExtResource("1_hiqwa")
+AcidRainManagerPath = NodePath("AcidRainManager")
+RainDuration = 2.0
+ClearDuration = 3.0
+WarningTime = 1.0
 
 [node name="Sprite2D10" type="Sprite2D" parent="."]
 position = Vector2(2, -570)
@@ -5099,3 +5104,5 @@ animation = &"attack"
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Player"]
 position = Vector2(36.5, -22.5)
 shape = SubResource("RectangleShape2D_70uel")
+
+[node name="AcidRainManager" type="AcidRainManager" parent="."]

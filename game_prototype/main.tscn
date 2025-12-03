@@ -1,8 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://bnld1pbnu6bc2"]
+[gd_scene load_steps=3 format=3 uid="uid://bnld1pbnu6bc2"]
 
+[ext_resource type="Script" uid="uid://cvcfyq6p3ue7i" path="res://Main.cs" id="1_0xm2m"]
 [ext_resource type="PackedScene" uid="uid://djxwlheb115rp" path="res://world.tscn" id="1_h2yge"]
 
 [node name="Main" type="Node2D"]
+script = ExtResource("1_0xm2m")
+AcidRainManagerPath = NodePath("AcidRainManager")
 
 [node name="AcidRainManager" type="AcidRainManager" parent="."]
 
