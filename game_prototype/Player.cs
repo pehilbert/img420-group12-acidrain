@@ -8,9 +8,17 @@ public partial class Player : CharacterBody2D
 	[Export] public float JumpVelocity = -400f;
 	[Export] public float AttackDuration = 0.4f;
 
+	public int Health = 100;
+	public bool IsInsideShelter = false;
+	public bool IsDead = false;
+	[Export] public AnimatedSprite2D HurtFlash;
 	private AnimatedSprite2D _anim;
 	private bool _isAttacking = false;
 	private float _attackTimeLeft = 0f;
+	private bool _isUnderRoof = false;
+
+	// Returns true if player is protected from rain (under shelter OR under any collidable object)
+	public bool IsSheltered => IsInsideShelter || _isUnderRoof;
 
 	public override void _Ready()
 	{
@@ -20,6 +28,11 @@ public partial class Player : CharacterBody2D
 	public override void _PhysicsProcess(double delta)
 	{
 		float dt = (float)delta;
+		if (IsDead)
+			return;
+
+		// Check for roof/shelter above player using direct physics query
+		_isUnderRoof = CheckForRoofAbove();
 
 		// Update attack timer
 		if (_isAttacking)
@@ -34,6 +47,16 @@ public partial class Player : CharacterBody2D
 		HandleAttack();
 		UpdateAnimation();
 	}
+	public async void PlayHurtFX()
+	{
+		if (HurtFlash == null) return;
+
+		HurtFlash.Visible = true;
+		HurtFlash.Play("hurt_fx");
+		await ToSignal(GetTree().CreateTimer(0.1f), "timeout");
+		HurtFlash.Visible = false;
+	}
+
 
 	private void ApplyGravity(float dt)
 	{
@@ -88,6 +111,33 @@ public partial class Player : CharacterBody2D
 			_anim.Play("attack");
 		}
 	}
+	public async void TakeDamage(int dmg)
+	{
+		if (IsDead)
+			return;
+
+		Health -= dmg;
+
+		// Optional hurt flash
+		if (HurtFlash != null)
+		{
+			HurtFlash.Visible = true;
+			HurtFlash.Play("hurt_fx");
+			await ToSignal(GetTree().CreateTimer(0.1f), "timeout");
+			HurtFlash.Visible = false;
+		}
+
+		if (Health <= 0)
+		{
+			IsDead = true;
+			Velocity = Vector2.Zero;   // stop movement
+			_anim.Play("death");       // play death animation
+
+			await ToSignal(GetTree().CreateTimer(0.5f), "timeout");
+			GetTree().ChangeSceneToFile("res://GameOver.tscn");
+		}
+	}
+
 
 	private void UpdateAnimation()
 	{
@@ -114,5 +164,31 @@ public partial class Player : CharacterBody2D
 			// Optional: if you have a "jump" animation, you can play it here
 			// _anim.Play("jump");
 		}
+	}
+
+	private bool CheckForRoofAbove()
+	{
+		// Use direct physics query to detect objects above the player
+		var spaceState = GetWorld2D().DirectSpaceState;
+		
+		// Cast ray from player's head upward
+		var from = GlobalPosition + new Vector2(0, -10); // Start slightly above player center
+		var to = GlobalPosition + new Vector2(0, -200);   // Check 200 pixels above
+		
+		var query = PhysicsRayQueryParameters2D.Create(from, to);
+		query.Exclude = new Godot.Collections.Array<Rid> { GetRid() }; // Exclude player
+		query.CollideWithBodies = true;
+		query.CollideWithAreas = true;
+		
+		var result = spaceState.IntersectRay(query);
+		
+		if (result.Count > 0)
+		{
+			// Something is above the player - they're sheltered!
+			// GD.Print("Sheltered by: " + result["collider"]); // Debug
+			return true;
+		}
+		
+		return false;
 	}
 }
