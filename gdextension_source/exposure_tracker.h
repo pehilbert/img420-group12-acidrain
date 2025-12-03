@@ -1,7 +1,10 @@
-#pragma once
+#ifndef EXPOSURE_TRACKER_H
+#define EXPOSURE_TRACKER_H
 
-#include "core/templates/vector.h"
-#include "scene/2d/node_2d.h"
+#include <godot_cpp/classes/node2d.hpp>
+#include <godot_cpp/templates/vector.hpp>
+
+using namespace godot;
 
 // Tracks entities and determines whether they are exposed to the sky via raycast.
 class ExposureTracker {
@@ -18,3 +21,5 @@ public:
 
 	const Vector<Node2D *> &get_tracked() const;
 };
+
+#endif // EXPOSURE_TRACKER_H

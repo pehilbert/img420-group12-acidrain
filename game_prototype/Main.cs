@@ -45,6 +45,7 @@ public partial class Main : Node2D
 		}
 
 		GD.Print($"✓ AcidRainManager found: {_acidRainManager.Name}");
+		GD.Print($"✓ Type: {_acidRainManager.GetType().Name}");
 
 		// Connect to all the AcidRainManager signals
 		GD.Print("\nConnecting to signals...");
@@ -71,7 +72,6 @@ public partial class Main : Node2D
 		GD.Print("  ✓ Cycle durations configured");
 
 		// Register entities that should be tracked for exposure
-		// Example: Register the player or any other entities
 		GD.Print("\nRegistering tracked entities...");
 		RegisterTrackedEntities();
 
@@ -110,9 +110,6 @@ public partial class Main : Node2D
 		int registeredCount = 0;
 		
 		// Example: Register the player node if it exists
-		// You can call this method whenever a new entity needs to be tracked
-		
-		// Example 1: Register by finding a node
 		var player = GetNodeOrNull<Node2D>("Player");
 		if (player != null)
 		{
@@ -125,7 +122,7 @@ public partial class Main : Node2D
 			GD.Print("  ℹ No 'Player' node found to register");
 		}
 
-		// Example 2: Register all entities in a group
+		// Example: Register all entities in a group
 		var entities = GetTree().GetNodesInGroup("acid_rain_vulnerable");
 		GD.Print($"  Found {entities.Count} entities in 'acid_rain_vulnerable' group");
 		
@@ -194,9 +191,6 @@ public partial class Main : Node2D
 				GD.Print($"  → Applied {damage:F2} damage to {entity.Name}");
 			}
 		}
-		
-		// You could also track cumulative exposure
-		// GD.Print($"{entity.Name} exposed for {exposureTime} seconds");
 	}
 
 	// Helper method you can call to manually register new entities at runtime

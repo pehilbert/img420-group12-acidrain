@@ -1,7 +1,9 @@
 #include "exposure_tracker.h"
+#include <godot_cpp/classes/world2d.hpp>
+#include <godot_cpp/classes/physics_direct_space_state2d.hpp>
+#include <godot_cpp/classes/physics_ray_query_parameters2d.hpp>
 
-#include "scene/resources/world_2d.h"
-#include "servers/physics_server_2d.h"
+using namespace godot;
 
 ExposureTracker::ExposureTracker(Node2D *p_owner) {
 	owner = p_owner;
@@ -34,8 +36,7 @@ bool ExposureTracker::is_entity_exposed(Node2D *entity) const {
 		return false;
 	}
 
-	PhysicsDirectSpaceState2D *space_state =
-			world->get_direct_space_state();
+	PhysicsDirectSpaceState2D *space_state = world->get_direct_space_state();
 	if (!space_state) {
 		return false;
 	}
@@ -43,17 +44,14 @@ bool ExposureTracker::is_entity_exposed(Node2D *entity) const {
 	Vector2 from = entity->get_global_position();
 	Vector2 to = from + Vector2(0, -10000.0);
 
-	PhysicsDirectSpaceState2D::RayParameters params;
-	params.from = from;
-	params.to = to;
-	params.collide_with_areas = true;
-	params.collide_with_bodies = true;
+	Ref<PhysicsRayQueryParameters2D> params = PhysicsRayQueryParameters2D::create(from, to);
+	params->set_collide_with_areas(true);
+	params->set_collide_with_bodies(true);
 
-	PhysicsDirectSpaceState2D::RayResult result;
-	bool hit = space_state->intersect_ray(params, result);
+	Dictionary result = space_state->intersect_ray(params);
 
 	// No hit = sky visible = exposed to rain
-	return !hit;
+	return result.is_empty();
 }
 
 const Vector<Node2D *> &ExposureTracker::get_tracked() const {
