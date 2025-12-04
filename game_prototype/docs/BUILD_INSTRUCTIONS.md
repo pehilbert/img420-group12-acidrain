@@ -96,7 +96,7 @@ scons platform=macos target=template_release
 
 ## Next Steps
 
-Add your game logic to `acid_rain.cpp`:
-- Override `_ready()`, `_process()`, `_physics_process()` as needed
-- Add custom methods and properties
-- Bind them in `_bind_methods()` to make them available in GDScript
+Integrate with your game logic:
+- Add AcidRainManager node to your scene
+- Use particles, notifications, etc. based on state changes
+- Calculate player/enemy damage based on exposure tick signals
