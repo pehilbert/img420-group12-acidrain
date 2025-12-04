@@ -5,6 +5,8 @@ public partial class Main : Node2D
 {
 	[Export]
 	public NodePath AcidRainManagerPath { get; set; }
+	[Export]
+	public int DamagePerSecond { get; set; } = 10;
 
 	[Export]
 	public bool EnableDebugPrints { get; set; } = true;
@@ -183,17 +185,17 @@ public partial class Main : Node2D
 			GD.Print($"[EXPOSURE] {entity.Name} exposed for {exposureTime:F3}s (delta time)");
 		}
 		
-		// Example: Apply damage or track exposure
-		if (entity.HasMethod("TakeDamage"))
+		if (entity is Player player)
 		{
-			// Apply damage based on exposure time
-			float damagePerSecond = 10.0f;
-			float damage = damagePerSecond * exposureTime;
-			entity.Call("TakeDamage", damage);
-			
-			if (EnableDebugPrints)
+			// Apply damage based on exposure time and DamagePerSecond
+			float damage = DamagePerSecond * exposureTime;
+			if (damage > 0)
 			{
-				GD.Print($"  → Applied {damage:F2} damage to {entity.Name}");
+				player.TakeDamage(damage);
+				if (EnableDebugPrints)
+				{
+					GD.Print($"[DAMAGE] {entity.Name} took {damage} damage from acid rain.");
+				}
 			}
 		}
 	}

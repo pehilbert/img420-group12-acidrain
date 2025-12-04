@@ -18,7 +18,7 @@ public partial class UI : CanvasLayer
 	{
 		if (_player != null)
 		{
-			int health = _player.Health;
+			int health = (int)_player.Health;
 			_bar.Value = health;
 			_percentLabel.Text = $" {health}%";
 		}

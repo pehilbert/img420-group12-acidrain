@@ -8,7 +8,7 @@ public partial class Player : CharacterBody2D
 	[Export] public float JumpVelocity = -400f;
 	[Export] public float AttackDuration = 0.4f;
 
-	public int Health = 100;
+	public float Health = 100;
 	public bool IsInsideShelter = false;
 	public bool IsDead = false;
 	[Export] public AnimatedSprite2D HurtFlash;
@@ -111,7 +111,7 @@ public partial class Player : CharacterBody2D
 			_anim.Play("attack");
 		}
 	}
-	public async void TakeDamage(int dmg)
+	public async void TakeDamage(float dmg)
 	{
 		if (IsDead)
 			return;
