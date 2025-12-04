@@ -1,4 +1,4 @@
-[gd_scene load_steps=13 format=3 uid="uid://bt7fj8a1bbb0d"]
+[gd_scene load_steps=14 format=3 uid="uid://bt7fj8a1bbb0d"]
 
 [ext_resource type="Script" uid="uid://doerdvlebylab" path="res://Player.cs" id="1_n7ghd"]
 [ext_resource type="Texture2D" uid="uid://dc7n8hbe44dob" path="res://PixelPlatformerSet1v.1.1/Character/Sprite/attack-06.png" id="2_nvl01"]
@@ -64,11 +64,17 @@ animations = [{
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_5tmop"]
 size = Vector2(11, 27)
 
-[node name="Player" type="CharacterBody2D" groups=["player"]]
+[sub_resource type="CircleShape2D" id="CircleShape2D_n7ghd"]
+radius = 23.0
+
+[node name="Player" type="CharacterBody2D" node_paths=PackedStringArray("HurtFlash") groups=["player"]]
 z_index = 1
 script = ExtResource("1_n7ghd")
+AttackAreaPath = NodePath("Area2D")
+HurtFlash = NodePath("AnimatedSprite2D")
 
 [node name="Camera2D" type="Camera2D" parent="."]
+offset = Vector2(0, -25)
 zoom = Vector2(4.5, 4.5)
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
@@ -77,3 +83,8 @@ animation = &"attack"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="."]
 shape = SubResource("RectangleShape2D_5tmop")
+
+[node name="Area2D" type="Area2D" parent="."]
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D"]
+shape = SubResource("CircleShape2D_n7ghd")

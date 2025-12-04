@@ -8,14 +8,12 @@ public partial class Player : CharacterBody2D
 	[Export] public float Gravity = 1200f;
 	[Export] public float JumpVelocity = -400f;
 	[Export] public float AttackDuration = 0.4f;
-	[Export] public NodePath CollisionTileLayerPath;
 
 	[Export] public int AttackDamage = 100;
 	[Export] public NodePath AttackAreaPath;
 	public float Health = 100;
 	public bool IsInsideShelter = false;
 	public bool IsDead = false;
-	[Export] public AnimatedSprite2D HurtFlash;
 	private AnimatedSprite2D _anim;
 	private bool _isAttacking = false;
 	private float _attackTimeLeft = 0f;
@@ -23,13 +21,10 @@ public partial class Player : CharacterBody2D
 	private CollisionShape2D _attackAreaShape;
 	private float _attackAreaBaseOffsetX = 0f;
 	private readonly HashSet<Enemy> _damagedEnemiesThisSwing = new();
-	private bool _isUnderRoof = false;
 	private TileMapLayer _collisionTileLayer;
 	private CollisionShape2D _collisionShape;
 	private Vector2 _collisionHalfExtents = Vector2.Zero;
 
-	// Returns true if player is protected from rain (under shelter OR under any collidable object)
-	public bool IsSheltered => IsInsideShelter || _isUnderRoof;
 
 	public override void _Ready()
 	{
@@ -38,11 +33,6 @@ public partial class Player : CharacterBody2D
 		if (_collisionShape?.Shape is RectangleShape2D rectShape)
 		{
 			_collisionHalfExtents = rectShape.Size * 0.5f;
-		}
-
-		if (!CollisionTileLayerPath.IsEmpty)
-		{
-			_collisionTileLayer = GetNodeOrNull<TileMapLayer>(CollisionTileLayerPath);
 		}
 
 		if (AttackAreaPath != null && !AttackAreaPath.IsEmpty)
@@ -69,9 +59,6 @@ public partial class Player : CharacterBody2D
 		if (IsDead)
 			return;
 
-		// Check for roof/shelter above player using direct physics query
-		_isUnderRoof = CheckForRoofAbove();
-
 		// Update attack timer
 		if (_isAttacking)
 		{
@@ -92,12 +79,9 @@ public partial class Player : CharacterBody2D
 	}
 	public async void PlayHurtFX()
 	{
-		if (HurtFlash == null) return;
-
-		HurtFlash.Visible = true;
-		HurtFlash.Play("hurt_fx");
+		_anim.Modulate = new Color(1, 0.5f, 0.5f); // Tint red
 		await ToSignal(GetTree().CreateTimer(0.1f), "timeout");
-		HurtFlash.Visible = false;
+		_anim.Modulate = new Color(1, 1, 1); // Reset color
 	}
 
 
@@ -167,19 +151,13 @@ public partial class Player : CharacterBody2D
 		Health -= dmg;
 
 		// Optional hurt flash
-		if (HurtFlash != null)
-		{
-			HurtFlash.Visible = true;
-			HurtFlash.Play("hurt_fx");
-			await ToSignal(GetTree().CreateTimer(0.1f), "timeout");
-			HurtFlash.Visible = false;
-		}
+		PlayHurtFX();
 
 		if (Health <= 0)
 		{
 			IsDead = true;
 			Velocity = Vector2.Zero;   // stop movement
-			_anim.Play("death");       // play death animation
+			_anim.Play("dead");       // play death animation
 
 			await ToSignal(GetTree().CreateTimer(0.5f), "timeout");
 			GetTree().ChangeSceneToFile("res://GameOver.tscn");
@@ -263,82 +241,5 @@ public partial class Player : CharacterBody2D
 		_attackArea.Monitoring = active;
 		if (_attackAreaShape != null)
 			_attackAreaShape.Disabled = !active;
-	}
-
-	private bool CheckForRoofAbove()
-	{
-		if (_collisionTileLayer != null && IsTileCoveringPlayer())
-			return true;
-
-		return CheckForRoofAboveWithPhysics();
-	}
-
-	private bool IsTileCoveringPlayer()
-	{
-		if (_collisionTileLayer?.TileSet == null)
-			return false;
-
-		int physicsLayerCount = _collisionTileLayer.TileSet.GetPhysicsLayersCount();
-		if (physicsLayerCount <= 0)
-			return false;
-
-		if (_collisionHalfExtents == Vector2.Zero)
-		{
-			_collisionHalfExtents = new Vector2(16, 16);
-		}
-
-		// Sample a few cells above the player's head to catch roofs even when off-screen
-		float inset = Mathf.Min(4f, _collisionHalfExtents.X * 0.9f);
-		Vector2[] offsets = new Vector2[]
-		{
-			new Vector2(-_collisionHalfExtents.X + inset, 0),
-			Vector2.Zero,
-			new Vector2(_collisionHalfExtents.X - inset, 0)
-		};
-
-		foreach (Vector2 offset in offsets)
-		{
-			Vector2 sampleGlobal = GlobalPosition + new Vector2(offset.X, -_collisionHalfExtents.Y - 4f);
-			Vector2 sampleLocal = _collisionTileLayer.ToLocal(sampleGlobal);
-			Vector2I cell = _collisionTileLayer.LocalToMap(sampleLocal);
-
-			var tileData = _collisionTileLayer.GetCellTileData(cell);
-			if (tileData == null)
-				continue;
-
-			for (int layerIdx = 0; layerIdx < physicsLayerCount; layerIdx++)
-			{
-				if (tileData.GetCollisionPolygonsCount(layerIdx) > 0)
-					return true;
-			}
-		}
-
-		return false;
-	}
-
-	private bool CheckForRoofAboveWithPhysics()
-	{
-		// Use direct physics query to detect objects above the player (fallback)
-		var spaceState = GetWorld2D().DirectSpaceState;
-		
-		// Cast ray from player's head upward
-		var from = GlobalPosition + new Vector2(0, -10); // Start slightly above player center
-		var to = GlobalPosition + new Vector2(0, -200);   // Check 200 pixels above
-		
-		var query = PhysicsRayQueryParameters2D.Create(from, to);
-		query.Exclude = new Godot.Collections.Array<Rid> { GetRid() }; // Exclude player
-		query.CollideWithBodies = true;
-		query.CollideWithAreas = true;
-		
-		var result = spaceState.IntersectRay(query);
-		
-		if (result.Count > 0)
-		{
-			// Something is above the player - they're sheltered!
-			// GD.Print("Sheltered by: " + result["collider"]); // Debug
-			return true;
-		}
-		
-		return false;
 	}
 }
