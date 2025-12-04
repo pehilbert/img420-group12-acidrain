@@ -84,6 +84,12 @@ public partial class Player : CharacterBody2D
 		_anim.Modulate = new Color(1, 1, 1); // Reset color
 	}
 
+	public async void PlayHealFX()
+	{
+		_anim.Modulate = new Color(0.5f, 1, 0.5f); // Tint green
+		await ToSignal(GetTree().CreateTimer(0.1f), "timeout");
+		_anim.Modulate = new Color(1, 1, 1); // Reset color
+	}
 
 	private void ApplyGravity(float dt)
 	{
@@ -148,7 +154,7 @@ public partial class Player : CharacterBody2D
 		if (IsDead)
 			return;
 
-		Health -= dmg;
+		Health = Math.Max(Health - dmg, 0);
 
 		// Optional hurt flash
 		PlayHurtFX();
@@ -159,11 +165,22 @@ public partial class Player : CharacterBody2D
 			Velocity = Vector2.Zero;   // stop movement
 			_anim.Play("dead");       // play death animation
 
-			await ToSignal(GetTree().CreateTimer(0.5f), "timeout");
+			await ToSignal(GetTree().CreateTimer(1.0f), "timeout");
 			GetTree().ChangeSceneToFile("res://GameOver.tscn");
 		}
 	}
 
+	public async void Heal(int amount)
+	{
+		if (IsDead)
+			return;
+
+		PlayHealFX();
+
+		Health += amount;
+		if (Health > 100)
+			Health = 100;
+	}
 
 	private void UpdateAnimation()
 	{
