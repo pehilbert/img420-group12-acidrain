@@ -7,15 +7,28 @@ public partial class AcidRainManager : Node
 
 	[Export] public float RainDuration = 5.0f;
 	[Export] public float DryDuration = 8.0f;
+	[Export] public float RainStartX = 0f;
+	[Export] public float RainEndX = 4810f;
 
 	private Timer _rainTimer;
 	private Timer _dryTimer;
 	private bool _isRaining = false;
 	private GpuParticles2D _rainParticles;
 	private Camera2D _camera;
+	private Player _player;
+	private float _rainAnchorX;
 
 	public override void _Ready()
 	{
+		if (RainEndX < RainStartX)
+		{
+			var temp = RainEndX;
+			RainEndX = RainStartX;
+			RainStartX = temp;
+		}
+
+		_rainAnchorX = Mathf.Lerp(RainStartX, RainEndX, 0.5f);
+
 		_rainTimer = new Timer();
 		_rainTimer.WaitTime = RainDuration;
 		_rainTimer.OneShot = true;
@@ -70,9 +83,10 @@ public partial class AcidRainManager : Node
 		// Gravity to make rain fall faster
 		material.Gravity = new Vector3(50, 600, 0);
 		
-		// Emission shape - wide rectangle above the screen
+		// Emission shape - cover the entire rainable range
+		float halfWidth = Mathf.Max(10f, (RainEndX - RainStartX) * 0.5f + 200f);
 		material.EmissionShape = ParticleProcessMaterial.EmissionShapeEnum.Box;
-		material.EmissionBoxExtents = new Vector3(400, 5, 0);
+		material.EmissionBoxExtents = new Vector3(halfWidth, 5, 0);
 		
 		// Purple color for acid rain
 		material.Color = new Color(0.7f, 0.3f, 1.0f, 0.85f); // Bright purple
@@ -84,35 +98,30 @@ public partial class AcidRainManager : Node
 		_rainParticles.ProcessMaterial = material;
 		
 		// Set visibility rect so particles render even when emitter is off-screen
-		_rainParticles.VisibilityRect = new Rect2(-500, -100, 1000, 600);
+		float visibilityWidth = (RainEndX - RainStartX) + 800f;
+		_rainParticles.VisibilityRect = new Rect2(new Vector2(-(visibilityWidth * 0.5f), -100f), new Vector2(visibilityWidth, 600f));
 
 		AddChild(_rainParticles);
 	}
 
 	public override void _Process(double delta)
 	{
-		// Find camera and follow it so rain is always visible on screen
-		if (_camera == null)
-		{
-			var player = GetTree().GetFirstNodeInGroup("player") as Node2D;
-			if (player != null)
-			{
-				_camera = player.GetNodeOrNull<Camera2D>("Camera2D");
-			}
-		}
+		EnsurePlayerReference();
+		EnsureCameraReference();
 
-		if (_camera != null && _rainParticles != null)
+		UpdateRainEmission();
+
+		if (_rainParticles != null)
 		{
-			// Position rain above the camera view
-			_rainParticles.GlobalPosition = _camera.GlobalPosition + new Vector2(0, -300);
+			float targetY = _camera != null ? _camera.GlobalPosition.Y - 300f : _rainParticles.GlobalPosition.Y;
+			_rainParticles.GlobalPosition = new Vector2(_rainAnchorX, targetY);
 		}
 	}
 
 	private void OnDryTimerTimeout()
 	{
 		_isRaining = true;
-		if (_rainParticles != null)
-			_rainParticles.Emitting = true;
+		UpdateRainEmission();
 		EmitSignal(SignalName.RainStarted);
 		_rainTimer.Start();
 	}
@@ -120,11 +129,58 @@ public partial class AcidRainManager : Node
 	private void OnRainTimerTimeout()
 	{
 		_isRaining = false;
-		if (_rainParticles != null)
-			_rainParticles.Emitting = false;
+		UpdateRainEmission();
 		EmitSignal(SignalName.RainStopped);
 		_dryTimer.Start();
 	}
 
 	public bool IsRaining => _isRaining;
+
+	public bool IsPlayerInRainZone()
+	{
+		EnsurePlayerReference();
+		EnsureCameraReference();
+
+		float sampleX;
+		if (_player != null)
+		{
+			sampleX = _player.GlobalPosition.X;
+		}
+		else if (_camera != null)
+		{
+			sampleX = _camera.GlobalPosition.X;
+		}
+		else
+		{
+			return false;
+		}
+
+		return sampleX >= RainStartX && sampleX <= RainEndX;
+	}
+
+	private void UpdateRainEmission()
+	{
+		if (_rainParticles == null)
+			return;
+
+		bool shouldEmit = _isRaining && IsPlayerInRainZone();
+		_rainParticles.Emitting = shouldEmit;
+		_rainParticles.Visible = shouldEmit;
+	}
+
+	private void EnsurePlayerReference()
+	{
+		if (_player == null)
+		{
+			_player = GetTree().GetFirstNodeInGroup("player") as Player;
+		}
+	}
+
+	private void EnsureCameraReference()
+	{
+		if (_camera == null && _player != null)
+		{
+			_camera = _player.GetNodeOrNull<Camera2D>("Camera2D");
+		}
+	}
 }
