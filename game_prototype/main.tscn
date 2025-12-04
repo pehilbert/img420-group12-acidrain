@@ -54,6 +54,7 @@ clear_seconds = 5.0
 warning_time = 2.0
 
 [node name="World" parent="." instance=ExtResource("1_world")]
+position = Vector2(56, 573)
 
 [node name="Player" parent="." instance=ExtResource("4_1bvp3")]
-position = Vector2(82, 537)
+position = Vector2(136, 553)
