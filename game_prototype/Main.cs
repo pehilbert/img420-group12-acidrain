@@ -7,20 +7,14 @@ public partial class Main : Node2D
 	public NodePath AcidRainManagerPath { get; set; }
 
 	[Export]
-	public float RainDuration { get; set; } = 30.0f;
-
-	[Export]
-	public float ClearDuration { get; set; } = 60.0f;
-
-	[Export]
-	public float WarningTime { get; set; } = 5.0f;
-
-	[Export]
 	public bool EnableDebugPrints { get; set; } = true;
 
+    private GpuParticles2D _rainParticles;
+
 	private Node2D _acidRainManager;
+	private Camera2D _camera;
 	private double _debugTimer = 0.0;
-	private const double DEBUG_INTERVAL = 2.0; // Print debug info every 2 seconds
+	private const double DEBUG_INTERVAL = 0.5;
 
 	public override void _Ready()
 	{
@@ -61,16 +55,6 @@ public partial class Main : Node2D
 		_acidRainManager.Connect("exposure_tick", new Callable(this, nameof(OnExposureTick)));
 		GD.Print("  ✓ Connected to 'exposure_tick'");
 
-		// Configure the cycle durations
-		GD.Print("\nConfiguring cycle durations...");
-		GD.Print($"  Clear Duration: {ClearDuration}s");
-		GD.Print($"  Rain Duration: {RainDuration}s");
-		GD.Print($"  Warning Time: {WarningTime}s");
-		
-		_acidRainManager.Call("set_cycle_durations", ClearDuration, RainDuration);
-		_acidRainManager.Call("set_warning_time", WarningTime);
-		GD.Print("  ✓ Cycle durations configured");
-
 		// Register entities that should be tracked for exposure
 		GD.Print("\nRegistering tracked entities...");
 		RegisterTrackedEntities();
@@ -80,6 +64,8 @@ public partial class Main : Node2D
 		_acidRainManager.Call("start_cycle");
 		GD.Print("✓ AcidRainManager cycle started!");
 		GD.Print("========================================\n");
+
+		CreateRainParticles();
 	}
 
 	public override void _Process(double delta)
@@ -102,6 +88,22 @@ public partial class Main : Node2D
 						 $"Time until rain: {timeUntilRain:F1}s | " +
 						 $"Time remaining in phase: {timeRemaining:F1}s");
 			}
+		}
+
+		// Find camera and follow it so rain is always visible on screen
+		if (_camera == null)
+		{
+			var player = GetTree().GetFirstNodeInGroup("player") as Node2D;
+			if (player != null)
+			{
+				_camera = player.GetNodeOrNull<Camera2D>("Camera2D");
+			}
+		}
+
+		if (_camera != null && _rainParticles != null)
+		{
+			// Position rain above the camera view
+			_rainParticles.GlobalPosition = _camera.GlobalPosition + new Vector2(0, -300);
 		}
 	}
 
@@ -145,7 +147,8 @@ public partial class Main : Node2D
 		GD.Print("\n┌────────────────────────────┐");
 		GD.Print("│  🌧️  RAIN STARTED  🌧️     │");
 		GD.Print("└────────────────────────────┘");
-		// Add your logic here: play rain sound, show rain particles, etc.
+		
+		if (_rainParticles != null) _rainParticles.Emitting = true;
 	}
 
 	// Called when rain stops
@@ -155,6 +158,8 @@ public partial class Main : Node2D
 		GD.Print("│  ☀️  RAIN STOPPED  ☀️      │");
 		GD.Print("└────────────────────────────┘");
 		// Add your logic here: stop rain sound, hide rain particles, etc.
+
+		if (_rainParticles != null) _rainParticles.Emitting = false;
 	}
 
 	// Called before rain starts (warning period)
@@ -217,5 +222,59 @@ public partial class Main : Node2D
 	public float GetTimeRemainingInPhase()
 	{
 		return _acidRainManager != null ? (float)_acidRainManager.Call("get_time_remaining_in_phase") : 0.0f;
+	}
+
+	private void CreateRainParticles()
+	{
+		_rainParticles = new GpuParticles2D();
+		_rainParticles.Amount = 500;
+		_rainParticles.Lifetime = 0.8;
+		_rainParticles.Emitting = false;
+		_rainParticles.ZIndex = 10; // Render on top so rain is visible
+
+		// Create a simple raindrop texture (white rectangle that will be tinted purple)
+		var texture = new GradientTexture2D();
+		texture.Width = 2;
+		texture.Height = 8;
+		texture.Fill = GradientTexture2D.FillEnum.Linear;
+		texture.FillFrom = new Vector2(0.5f, 0);
+		texture.FillTo = new Vector2(0.5f, 1);
+		var texGradient = new Gradient();
+		texGradient.SetColor(0, new Color(1, 1, 1, 1));
+		texGradient.SetColor(1, new Color(1, 1, 1, 0.3f));
+		texture.Gradient = texGradient;
+		_rainParticles.Texture = texture;
+
+		// Create the particle material
+		var material = new ParticleProcessMaterial();
+		
+		// Direction: falling down with slight angle
+		material.Direction = new Vector3(0.2f, 1, 0);
+		material.Spread = 5f;
+		
+		// Speed - fast rain
+		material.InitialVelocityMin = 500f;
+		material.InitialVelocityMax = 700f;
+		
+		// Gravity to make rain fall faster
+		material.Gravity = new Vector3(50, 600, 0);
+		
+		// Emission shape - wide rectangle above the screen
+		material.EmissionShape = ParticleProcessMaterial.EmissionShapeEnum.Box;
+		material.EmissionBoxExtents = new Vector3(400, 5, 0);
+		
+		// Purple color for acid rain
+		material.Color = new Color(0.7f, 0.3f, 1.0f, 0.85f); // Bright purple
+		
+		// Scale for rain drops
+		material.ScaleMin = 1.0f;
+		material.ScaleMax = 2.0f;
+
+		_rainParticles.ProcessMaterial = material;
+		
+		// Set visibility rect so particles render even when emitter is off-screen
+		_rainParticles.VisibilityRect = new Rect2(-500, -100, 1000, 600);
+
+		AddChild(_rainParticles);
 	}
 }
