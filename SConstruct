@@ -13,19 +13,22 @@ env = SConscript("godot-cpp/SConstruct")
 # - LINKFLAGS are for linking flags
 
 # tweak this if you want to use different folders, or more folders, to store your source code in.
-env.Append(CPPPATH=["gdextension_source/"])
-sources = Glob("gdextension_source/*.cpp")
+source_dir = "module_source/acid_rain"
+env.Append(CPPPATH=[source_dir])
+sources = Glob(f"{source_dir}/*.cpp")
+
+output_dir = "game_prototype/exports/bin"
 
 if env["platform"] == "macos":
     library = env.SharedLibrary(
-        "game_prototype/bin/libacidrain.{}.{}.framework/libacidrain.{}.{}".format(
-            env["platform"], env["target"], env["platform"], env["target"]
+        "{}/libacidrain.{}.{}.framework/libacidrain.{}.{}".format(
+            output_dir, env["platform"], env["target"], env["platform"], env["target"]
         ),
         source=sources,
     )
 else:
     library = env.SharedLibrary(
-        "game_prototype/bin/libacidrain{}{}".format(env["suffix"], env["SHLIBSUFFIX"]),
+        "{}/libacidrain{}{}".format(output_dir, env["suffix"], env["SHLIBSUFFIX"]),
         source=sources,
     )
 
