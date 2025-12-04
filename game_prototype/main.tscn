@@ -1,15 +1,18 @@
 [gd_scene load_steps=5 format=3 uid="uid://cvymly23ly78j"]
 
 [ext_resource type="PackedScene" uid="uid://djxwlheb115rp" path="res://world.tscn" id="1_world"]
-[ext_resource type="Script" uid="uid://bg6uli0q3rqlu" path="res://Main.cs" id="2_main"]
+[ext_resource type="Script" uid="uid://cvcfyq6p3ue7i" path="res://Main.cs" id="2_main"]
 [ext_resource type="Script" uid="uid://dihcwe7bb4tq2" path="res://UI.cs" id="3_ui"]
-[ext_resource type="Script" uid="uid://bjdn2f3veppud" path="res://AcidRainManager.cs" id="4_rain"]
+[ext_resource type="PackedScene" uid="uid://bt7fj8a1bbb0d" path="res://player.tscn" id="4_1bvp3"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("2_main")
+AcidRainManagerPath = NodePath("AcidRainManager")
 
-[node name="AcidRainManager" type="Node" parent="."]
-script = ExtResource("4_rain")
+[node name="AcidRainManager" type="AcidRainManager" parent="."]
+rain_seconds = 5.0
+clear_seconds = 5.0
+warning_time = 2.0
 
 [node name="World" parent="." instance=ExtResource("1_world")]
 
@@ -38,3 +41,5 @@ show_percentage = false
 layout_mode = 2
 theme_override_font_sizes/font_size = 24
 text = " 100%"
+
+[node name="Player" parent="." instance=ExtResource("4_1bvp3")]
