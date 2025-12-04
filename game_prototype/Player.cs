@@ -11,6 +11,7 @@ public partial class Player : CharacterBody2D
 
 	[Export] public int AttackDamage = 100;
 	[Export] public NodePath AttackAreaPath;
+	[Export] public AudioStream JumpSound;
 	public float Health = 100;
 	public bool IsInsideShelter = false;
 	public bool IsDead = false;
@@ -24,6 +25,7 @@ public partial class Player : CharacterBody2D
 	private TileMapLayer _collisionTileLayer;
 	private CollisionShape2D _collisionShape;
 	private Vector2 _collisionHalfExtents = Vector2.Zero;
+	private AudioStreamPlayer2D _jumpSoundPlayer;
 
 
 	public override void _Ready()
@@ -51,6 +53,11 @@ public partial class Player : CharacterBody2D
 			_attackArea.BodyEntered += OnAttackAreaBodyEntered;
 			SetAttackAreaActive(false);
 		}
+
+		// Setup jump sound player
+		_jumpSoundPlayer = new AudioStreamPlayer2D();
+		_jumpSoundPlayer.Bus = "Master";
+		AddChild(_jumpSoundPlayer);
 	}
 
 	public override void _PhysicsProcess(double delta)
@@ -122,6 +129,7 @@ public partial class Player : CharacterBody2D
 		if (!_isAttacking && IsOnFloor() && Input.IsActionJustPressed("jump"))
 		{
 			velocity.Y = JumpVelocity;
+			PlayJumpSound();
 		}
 
 		Velocity = velocity;
@@ -134,6 +142,15 @@ public partial class Player : CharacterBody2D
 		}
 
 		UpdateAttackAreaFacing();
+	}
+
+	private void PlayJumpSound()
+	{
+		if (JumpSound != null && _jumpSoundPlayer != null)
+		{
+			_jumpSoundPlayer.Stream = JumpSound;
+			_jumpSoundPlayer.Play();
+		}
 	}
 
 	private void HandleAttack()
