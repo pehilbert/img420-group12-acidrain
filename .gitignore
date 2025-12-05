@@ -3,3 +3,4 @@ __pycache__
 *.obj
 godot-cpp
 *.dblite
+gdextension_source/*.os
