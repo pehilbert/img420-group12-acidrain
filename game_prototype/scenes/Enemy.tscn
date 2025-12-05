@@ -1,7 +1,7 @@
 [gd_scene load_steps=6 format=3 uid="uid://v2xn4agbe7o"]
 
 [ext_resource type="Script" uid="uid://b21irh4ac0h6b" path="res://scripts/Enemy.cs" id="1_55jtl"]
-[ext_resource type="AudioStream" uid="uid://cxnbov2x6tgxa" path="res://assets/sword-sound-260274.mp3" id="2_ft8do"]
+[ext_resource type="AudioStream" uid="uid://bf3mqxtphwllv" path="res://assets/disguised-screams-240362.mp3" id="2_ft8do"]
 [ext_resource type="Texture2D" uid="uid://cwj35js7ccplu" path="res://assets/PixelPlatformerSet1v.1.1/Character/Sprite/attack-01.png" id="2_mpr68"]
 
 [sub_resource type="RectangleShape2D" id="EnemyBodyShape"]
