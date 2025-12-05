@@ -10,6 +10,8 @@ public partial class Main : Node2D
 
 	[Export]
 	public bool EnableDebugPrints { get; set; } = true;
+	[Export]
+	public AudioStream RainSound { get; set; }
 
     private GpuParticles2D _rainParticles;
 
@@ -17,6 +19,7 @@ public partial class Main : Node2D
 	private Camera2D _camera;
 	private double _debugTimer = 0.0;
 	private const double DEBUG_INTERVAL = 0.5;
+	private AudioStreamPlayer2D _rainSoundPlayer;
 
 	public override void _Ready()
 	{
@@ -60,6 +63,13 @@ public partial class Main : Node2D
 		// Register entities that should be tracked for exposure
 		GD.Print("\nRegistering tracked entities...");
 		RegisterTrackedEntities();
+
+		// Create and setup rain sound player
+		_rainSoundPlayer = new AudioStreamPlayer2D();
+		_rainSoundPlayer.Stream = RainSound;
+		_rainSoundPlayer.Bus = "Master";
+		_rainSoundPlayer.Autoplay = false;
+		AddChild(_rainSoundPlayer);
 
 		// Start the rain cycle
 		GD.Print("\nStarting rain cycle...");
@@ -151,6 +161,10 @@ public partial class Main : Node2D
 		GD.Print("└────────────────────────────┘");
 		
 		if (_rainParticles != null) _rainParticles.Emitting = true;
+		if (_rainSoundPlayer != null && RainSound != null)
+		{
+			_rainSoundPlayer.Play();
+		}
 	}
 
 	// Called when rain stops
@@ -162,6 +176,10 @@ public partial class Main : Node2D
 		// Add your logic here: stop rain sound, hide rain particles, etc.
 
 		if (_rainParticles != null) _rainParticles.Emitting = false;
+		if (_rainSoundPlayer != null && RainSound != null)
+		{
+			_rainSoundPlayer.Stop();
+		}
 	}
 
 	// Called before rain starts (warning period)

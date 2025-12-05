@@ -1,13 +1,15 @@
-[gd_scene load_steps=5 format=3 uid="uid://cvymly23ly78j"]
+[gd_scene load_steps=6 format=3 uid="uid://cvymly23ly78j"]
 
 [ext_resource type="PackedScene" uid="uid://djxwlheb115rp" path="res://scenes/world.tscn" id="1_world"]
 [ext_resource type="Script" uid="uid://cvcfyq6p3ue7i" path="res://scripts/Main.cs" id="2_main"]
+[ext_resource type="AudioStream" uid="uid://dnqdsq0r0hs58" path="res://assets/mixkit-light-rain-loop-1253.wav" id="2_tbgi4"]
 [ext_resource type="Script" uid="uid://dihcwe7bb4tq2" path="res://scripts/UI.cs" id="3_ui"]
 [ext_resource type="PackedScene" uid="uid://bt7fj8a1bbb0d" path="res://scenes/player.tscn" id="4_1bvp3"]
 
 [node name="Main" type="Node2D"]
 script = ExtResource("2_main")
 AcidRainManagerPath = NodePath("AcidRainManager")
+RainSound = ExtResource("2_tbgi4")
 
 [node name="UI" type="CanvasLayer" parent="."]
 script = ExtResource("3_ui")
